@@ -33,6 +33,11 @@
             --level-3: #f97316;
             --level-4: #eab308;
             --level-5: #22c55e;
+            --progress-start: #4a5b6b;
+            --progress-25: #00a37a;
+            --progress-50: #00b894;
+            --progress-75: #00d4aa;
+            --progress-100: #00ffcc;
         }
 
         * {
@@ -101,6 +106,49 @@
 
         .habit-card.perfect-week {
             box-shadow: 0 0 15px var(--accent);
+        }
+
+        .habit-card.progressive {
+            border-top: 2px solid var(--accent);
+        }
+
+        .progress-goal {
+            font-size: 0.9rem;
+            color: var(--accent);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #00ffcc);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .max-badge {
+            background: linear-gradient(135deg, #f97316, #eab308);
+            color: black;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .day-btn {
@@ -237,9 +285,11 @@
             border-radius: 20px;
             padding: 32px;
             width: 90%;
-            max-width: 420px;
+            max-width: 500px;
             transform: scale(0.9) translateY(20px);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal-overlay.active .modal {
@@ -261,6 +311,16 @@
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+
+        .input-field[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .input-field[type="number"]::-webkit-outer-spin-button,
+        .input-field[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
         .streak-badge {
@@ -454,10 +514,11 @@
             }
         }
 
+        /* Player Card - Now on RIGHT side */
         .player-card {
             position: fixed;
             top: 1.5rem;
-            left: 1.5rem;
+            right: 1.5rem;
             width: 56px;
             height: 56px;
             border-radius: 28px;
@@ -584,6 +645,81 @@
             grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
             gap: 0.5rem;
         }
+
+        /* Progressive difficulty toggle switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin-left: 10px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: var(--accent);
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .progressive-fields {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .progressive-fields.hidden {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .progressive-fields.visible {
+            max-height: 300px;
+            opacity: 1;
+            margin-top: 1rem;
+        }
+
+        /* Icon picker styling */
+        .icon-btn {
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.1);
+            border-color: var(--accent) !important;
+        }
     </style>
 </head>
 
@@ -592,7 +728,7 @@
     <div class="grid-overlay"></div>
 
     <div class="max-w-6xl mx-auto px-4 py-8 md:py-12">
-        <!-- Player Stats Card - GAMIFIED -->
+        <!-- Player Stats Card - Now on RIGHT side -->
         <div id="player-card" class="player-card">
             <!-- Populated by JavaScript -->
         </div>
@@ -602,7 +738,7 @@
             <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                 <div>
                     <p class="text-sm uppercase tracking-widest mb-2" style="color: var(--accent);">Daily Progress of
-                        Bhavini</p>
+                        Shivam</p>
                     <h1 class="text-4xl md:text-5xl font-bold tracking-tight">Solo Leveling ⚔️</h1>
                 </div>
                 <div class="flex items-center gap-4">
@@ -817,19 +953,20 @@
         </div>
     </div>
 
-    <!-- MODAL -->
+    <!-- MODAL - Updated with NEW ICONS -->
     <div class="modal-overlay" id="modal">
         <div class="modal">
             <h3 class="text-2xl font-bold mb-6">New Habit</h3>
             <form id="add-habit-form">
                 <div class="mb-4">
                     <label class="block text-sm mb-2" style="color: var(--muted);">Habit Name</label>
-                    <input type="text" class="input-field" id="habit-name" placeholder="e.g., Morning meditation"
+                    <input type="text" class="input-field" id="habit-name" placeholder="e.g., Drink Water"
                         autocomplete="off" required>
                 </div>
-                <div class="mb-6">
+                <div class="mb-4">
                     <label class="block text-sm mb-2" style="color: var(--muted);">Icon</label>
                     <div class="flex gap-2 flex-wrap" id="icon-picker">
+                        <!-- Original icons -->
                         <button type="button"
                             class="icon-btn w-12 h-12 rounded-xl border flex items-center justify-center text-xl transition-all"
                             style="border-color: var(--accent); background: var(--accent-dim);" data-icon="fitness"
@@ -882,9 +1019,172 @@
                                     d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                             </svg>
                         </button>
+                        
+                        <!-- NEW ICONS ADDED HERE -->
+                        <button type="button"
+                            class="icon-btn w-12 h-12 rounded-xl border flex items-center justify-center text-xl transition-all"
+                            style="border-color: var(--border);" data-icon="coffee" onclick="window.selectIcon(this)">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+                                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+                                <line x1="6" y1="1" x2="6" y2="4" />
+                                <line x1="10" y1="1" x2="10" y2="4" />
+                                <line x1="14" y1="1" x2="14" y2="4" />
+                            </svg>
+                        </button>
+                        <button type="button"
+                            class="icon-btn w-12 h-12 rounded-xl border flex items-center justify-center text-xl transition-all"
+                            style="border-color: var(--border);" data-icon="meditation" onclick="window.selectIcon(this)">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="8" r="4" />
+                                <path d="M5 20v-2a7 7 0 0 1 14 0v2" />
+                                <path d="M8 12v4" />
+                                <path d="M16 12v4" />
+                                <path d="M12 20v-8" />
+                            </svg>
+                        </button>
+                        <button type="button"
+                            class="icon-btn w-12 h-12 rounded-xl border flex items-center justify-center text-xl transition-all"
+                            style="border-color: var(--border);" data-icon="running" onclick="window.selectIcon(this)">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="17" cy="4" r="2" />
+                                <path d="M13 10l-2-2-2 2 2 4 2 2-2 4" />
+                                <path d="M7 10l3 3 1-2" />
+                                <path d="M17 16l-3-3 2-4" />
+                            </svg>
+                        </button>
+                        <button type="button"
+                            class="icon-btn w-12 h-12 rounded-xl border flex items-center justify-center text-xl transition-all"
+                            style="border-color: var(--border);" data-icon="yoga" onclick="window.selectIcon(this)">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="8" r="2" />
+                                <path d="M5 16l3-4 4 4 4-4 3 4" />
+                                <path d="M3 20h18" />
+                                <path d="M12 12v8" />
+                            </svg>
+                        </button>
+                        <button type="button"
+                            class="icon-btn w-12 h-12 rounded-xl border flex items-center justify-center text-xl transition-all"
+                            style="border-color: var(--border);" data-icon="money" onclick="window.selectIcon(this)">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="2" y="6" width="20" height="12" rx="2" />
+                                <circle cx="12" cy="12" r="2" />
+                                <path d="M6 12h.01M18 12h.01" />
+                            </svg>
+                        </button>
+                        <button type="button"
+                            class="icon-btn w-12 h-12 rounded-xl border flex items-center justify-center text-xl transition-all"
+                            style="border-color: var(--border);" data-icon="gym" onclick="window.selectIcon(this)">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="4" y="8" width="16" height="8" rx="1" />
+                                <path d="M8 4v4" />
+                                <path d="M16 4v4" />
+                                <path d="M8 16v4" />
+                                <path d="M16 16v4" />
+                            </svg>
+                        </button>
+                        <button type="button"
+                            class="icon-btn w-12 h-12 rounded-xl border flex items-center justify-center text-xl transition-all"
+                            style="border-color: var(--border);" data-icon="study" onclick="window.selectIcon(this)">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                            </svg>
+                        </button>
+                        <button type="button"
+                            class="icon-btn w-12 h-12 rounded-xl border flex items-center justify-center text-xl transition-all"
+                            style="border-color: var(--border);" data-icon="brain" onclick="window.selectIcon(this)">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 3a3 3 0 0 0-3 3v6.5" />
+                                <path d="M12 3a3 3 0 0 1 3 3v6.5" />
+                                <path d="M6 9a3 3 0 0 0-3 3v3a3 3 0 0 0 3 3" />
+                                <path d="M18 9a3 3 0 0 1 3 3v3a3 3 0 0 1-3 3" />
+                                <path d="M9 21v-3a3 3 0 0 1 6 0v3" />
+                            </svg>
+                        </button>
+                        <button type="button"
+                            class="icon-btn w-12 h-12 rounded-xl border flex items-center justify-center text-xl transition-all"
+                            style="border-color: var(--border);" data-icon="plant" onclick="window.selectIcon(this)">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 22v-4" />
+                                <path d="M8 8a4 4 0 0 1 8 0v6a4 4 0 0 1-8 0V8z" />
+                                <path d="M4 14h16" />
+                                <path d="M12 2v2" />
+                            </svg>
+                        </button>
+                        <button type="button"
+                            class="icon-btn w-12 h-12 rounded-xl border flex items-center justify-center text-xl transition-all"
+                            style="border-color: var(--border);" data-icon="music" onclick="window.selectIcon(this)">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M9 18V5l12-2v13" />
+                                <circle cx="6" cy="18" r="3" />
+                                <circle cx="18" cy="16" r="3" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
-                <div class="flex gap-3">
+
+                <!-- PROGRESSIVE DIFFICULTY TOGGLE -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm" style="color: var(--muted);">Progressive Difficulty</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="progressive-toggle" onchange="window.toggleProgressiveFields()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <p class="text-xs mt-1" style="color: var(--muted);">Goal increases each day</p>
+                </div>
+
+                <!-- PROGRESSIVE FIELDS (hidden by default) -->
+                <div id="progressive-fields" class="progressive-fields hidden">
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs mb-1" style="color: var(--muted);">Start Value</label>
+                            <input type="number" id="start-value" class="input-field" step="0.1" min="0" value="1.0">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1" style="color: var(--muted);">Unit</label>
+                            <select id="unit" class="input-field">
+                                <option value="Liters">Liters</option>
+                                <option value="km">km</option>
+                                <option value="pages">pages</option>
+                                <option value="minutes">minutes</option>
+                                <option value="reps">reps</option>
+                                <option value="servings">servings</option>
+                                <option value="glasses">glasses</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs mb-1" style="color: var(--muted);">Increment per day</label>
+                            <input type="number" id="increment" class="input-field" step="0.1" min="0.1" value="0.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1" style="color: var(--muted);">Maximum Value</label>
+                            <input type="number" id="max-value" class="input-field" step="0.1" min="0" value="3.0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs mb-1" style="color: var(--muted);">Example progression:</label>
+                        <div class="text-xs p-2 rounded" style="background: var(--bg-secondary);" id="example-progression">
+                            Day 1: 1.0 Liters → Day 2: 1.5 Liters → Day 3: 2.0 Liters
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-4">
                     <button type="button" class="flex-1 py-3 rounded-xl font-semibold transition-all"
                         style="background: var(--bg-secondary); border: 1px solid var(--border);"
                         onclick="window.closeModal()">Cancel</button>
@@ -956,6 +1256,61 @@
                 6: '👑', 7: '⚔️', 8: '🛡️', 9: '🐉', 10: '⭐',
                 11: '🌑', 12: '👹', 13: '⚡', 14: '🔥', 15: '✨'
             };
+
+            // ----- PROGRESSIVE DIFFICULTY FUNCTIONS -----
+            window.toggleProgressiveFields = function () {
+                const toggle = document.getElementById('progressive-toggle');
+                const fields = document.getElementById('progressive-fields');
+                if (toggle.checked) {
+                    fields.classList.remove('hidden');
+                    fields.classList.add('visible');
+                    updateExampleProgression();
+                } else {
+                    fields.classList.remove('visible');
+                    fields.classList.add('hidden');
+                }
+            };
+
+            function updateExampleProgression() {
+                const start = parseFloat(document.getElementById('start-value')?.value) || 1.0;
+                const increment = parseFloat(document.getElementById('increment')?.value) || 0.5;
+                const unit = document.getElementById('unit')?.value || 'Liters';
+                const exampleDiv = document.getElementById('example-progression');
+                if (exampleDiv) {
+                    exampleDiv.innerHTML = `Day 1: ${start} ${unit} → Day 2: ${(start + increment).toFixed(1)} ${unit} → Day 3: ${(start + increment * 2).toFixed(1)} ${unit}`;
+                }
+            }
+
+            // Calculate today's goal for progressive habit
+            function calculateTodaysGoal(habit) {
+                if (!habit.progressive) return null;
+                
+                // Count how many times this habit has been completed
+                const completionCount = habit.completedDates.length;
+                const todayGoal = habit.startValue + (habit.increment * completionCount);
+                
+                // Cap at maximum value
+                return Math.min(todayGoal, habit.maxValue);
+            }
+
+            // Calculate progress percentage towards today's goal (for display)
+            function calculateProgressPercentage(habit) {
+                if (!habit.progressive) return 0;
+                
+                const todayGoal = calculateTodaysGoal(habit);
+                if (!todayGoal) return 0;
+                
+                // For now, we just show 0% until we add tracking of actual progress
+                // You could add a "current amount" field if you want to track partial progress
+                return 0;
+            }
+
+            // Check if habit has reached maximum
+            function hasReachedMax(habit) {
+                if (!habit.progressive) return false;
+                const todayGoal = calculateTodaysGoal(habit);
+                return todayGoal >= habit.maxValue;
+            }
 
             // ----- GAMIFICATION FUNCTIONS -----
             window.addXP = function (amount, reason) {
@@ -1206,7 +1561,7 @@
                 if (allDaysPerfect) unlockAchievement('perfectWeek');
             }
 
-            // ----- BACKUP FUNCTIONS (unchanged) -----
+            // ----- BACKUP FUNCTIONS -----
             window.saveTodayBackup = function () {
                 const today = new Date().toISOString().slice(0, 10);
                 const now = new Date().toLocaleTimeString().replace(/:/g, '-');
@@ -1508,6 +1863,7 @@
                     habits: window.habits.map(habit => ({
                         name: habit.name,
                         icon: habit.icon,
+                        progressive: habit.progressive || false,
                         completedDates: habit.completedDates.filter(date => date.startsWith(month))
                     })),
                     stats: {
@@ -1734,8 +2090,12 @@
                 container.innerHTML = window.habits.map((habit, index) => {
                     const streak = calculateStreak(habit);
                     const streakClass = streak >= 30 ? 'streak-30' : streak >= 7 ? 'streak-7' : '';
+                    const isProgressive = habit.progressive || false;
+                    const todayGoal = isProgressive ? calculateTodaysGoal(habit) : null;
+                    const reachedMax = isProgressive ? hasReachedMax(habit) : false;
+                    
                     return `
-            <div class="habit-card p-5 slide-up ${streakClass}" style="opacity: 0; animation-delay: ${0.1 * (index + 1)}s;">
+            <div class="habit-card p-5 slide-up ${streakClass} ${isProgressive ? 'progressive' : ''}" style="opacity: 0; animation-delay: ${0.1 * (index + 1)}s;">
               <div class="flex items-start justify-between mb-4">
                 <div class="flex items-center gap-3">
                   <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--accent-dim); color: var(--accent);">
@@ -1745,6 +2105,7 @@
                     <h3 class="font-semibold text-lg">${escapeHtml(habit.name)}</h3>
                     <div class="flex items-center gap-2 mt-1">
                       ${streak > 0 ? `<span class="streak-badge">${streak} day streak</span>` : ''}
+                      ${reachedMax ? `<span class="streak-badge" style="background: #f97316; color: black;">MAX 🔒</span>` : ''}
                     </div>
                   </div>
                 </div>
@@ -1754,6 +2115,18 @@
                   </svg>
                 </button>
               </div>
+              
+              ${isProgressive ? `
+              <div class="progress-goal mb-2">
+                <span>🎯 Today's goal:</span>
+                <span class="font-bold">${todayGoal.toFixed(1)} ${habit.unit || 'units'}</span>
+                <span class="text-xs" style="color: var(--muted);">(Day ${habit.completedDates.length + 1})</span>
+              </div>
+              <div class="progress-bar-container mb-3">
+                <div class="progress-bar-fill" style="width: ${(todayGoal / habit.maxValue) * 100}%"></div>
+              </div>
+              ` : ''}
+              
               <div class="flex gap-2">
                 ${dates.map(date => {
                         const isCompleted = habit.completedDates.includes(date);
@@ -1847,6 +2220,15 @@
                 document.getElementById('modal').classList.add('active');
                 document.getElementById('habit-name').focus();
                 window.selectedIcon = 'fitness';
+                
+                // Reset progressive toggle
+                const toggle = document.getElementById('progressive-toggle');
+                if (toggle) {
+                    toggle.checked = false;
+                    document.getElementById('progressive-fields').classList.add('hidden');
+                    document.getElementById('progressive-fields').classList.remove('visible');
+                }
+                
                 document.querySelectorAll('.icon-btn').forEach(btn => {
                     if (btn.dataset.icon === 'fitness') {
                         btn.style.borderColor = 'var(--accent)';
@@ -1879,13 +2261,25 @@
                 const name = nameInput.value.trim();
                 if (!name) return;
 
+                const toggle = document.getElementById('progressive-toggle');
+                const isProgressive = toggle && toggle.checked;
+
                 const habit = {
                     id: Date.now().toString() + '-' + Math.random().toString(36).substring(2, 8),
                     name: name,
                     icon: window.selectedIcon,
                     completedDates: [],
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    progressive: isProgressive
                 };
+
+                // Add progressive fields if enabled
+                if (isProgressive) {
+                    habit.startValue = parseFloat(document.getElementById('start-value').value) || 1.0;
+                    habit.increment = parseFloat(document.getElementById('increment').value) || 0.5;
+                    habit.maxValue = parseFloat(document.getElementById('max-value').value) || 3.0;
+                    habit.unit = document.getElementById('unit').value || 'Liters';
+                }
 
                 window.habits.push(habit);
                 saveHabits();
@@ -1910,9 +2304,9 @@
                 document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
                 const hour = now.getHours();
                 let greeting = 'Good evening';
-                if (hour < 12) greeting = 'Good morning Bhavini';
-                else if (hour < 16) greeting = 'Good afternoon Bhavini';
-                else if (hour < 24) greeting = 'Good evening Bhavini';
+                if (hour < 12) greeting = 'Good morning Shivam';
+                else if (hour < 16) greeting = 'Good afternoon Shivam';
+                else if (hour < 24) greeting = 'Good evening Shivam';
                 document.getElementById('greeting').textContent = greeting;
             }
 
@@ -1925,6 +2319,14 @@
                 updatePlayerUI();
                 renderAchievements();
                 checkDailyReset();
+
+                // Add event listeners for progressive fields
+                const startInput = document.getElementById('start-value');
+                const incrementInput = document.getElementById('increment');
+                if (startInput && incrementInput) {
+                    startInput.addEventListener('input', updateExampleProgression);
+                    incrementInput.addEventListener('input', updateExampleProgression);
+                }
 
                 setInterval(updateDateTime, 60000);
                 setTimeout(window.checkForAutoBackup, 2000);
@@ -1957,7 +2359,17 @@
                 water: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>',
                 sleep: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
                 code: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
-                heart: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+                heart: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+                coffee: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>',
+                meditation: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/><path d="M8 12v4"/><path d="M16 12v4"/><path d="M12 20v-8"/></svg>',
+                running: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="17" cy="4" r="2"/><path d="M13 10l-2-2-2 2 2 4 2 2-2 4"/><path d="M7 10l3 3 1-2"/><path d="M17 16l-3-3 2-4"/></svg>',
+                yoga: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="2"/><path d="M5 16l3-4 4 4 4-4 3 4"/><path d="M3 20h18"/><path d="M12 12v8"/></svg>',
+                money: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>',
+                gym: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="8" width="16" height="8" rx="1"/><path d="M8 4v4"/><path d="M16 4v4"/><path d="M8 16v4"/><path d="M16 16v4"/></svg>',
+                study: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+                brain: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a3 3 0 0 0-3 3v6.5"/><path d="M12 3a3 3 0 0 1 3 3v6.5"/><path d="M6 9a3 3 0 0 0-3 3v3a3 3 0 0 0 3 3"/><path d="M18 9a3 3 0 0 1 3 3v3a3 3 0 0 1-3 3"/><path d="M9 21v-3a3 3 0 0 1 6 0v3"/></svg>',
+                plant: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-4"/><path d="M8 8a4 4 0 0 1 8 0v6a4 4 0 0 1-8 0V8z"/><path d="M4 14h16"/><path d="M12 2v2"/></svg>',
+                music: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>'
             };
 
             window.pieChart = null;
